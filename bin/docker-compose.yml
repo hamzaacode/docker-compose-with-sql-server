@@ -1,0 +1,77 @@
+# Docker Compose file Reference (https://docs.docker.com/compose/compose-file/)
+
+#version: '3.8'
+#services: 
+    # mysqldb:
+    # app:
+#volumes:
+
+# -- version: Docker Compose file format version will be used.
+# -- services: individual services in isolated containers. Our application has two services: app (Spring Boot) and mysqldb (MySQL database).
+# -- volumes: named volumes that keeps our data alive after restart.
+# Docker Compose file Reference (https://docs.docker.com/compose/compose-file/)
+
+version: '3.0'
+
+# Define services
+services:
+  # App backend service
+  app-server:
+    # Configuration for building the docker image for the backend service
+    build:
+      context: docker-compose-app # Use an image built from the specified dockerfile in the `polling-app-server` directory.
+      dockerfile: dockerFile
+    ports:
+      - "8080:8080" # Forward the exposed port 8080 on the container to port 8080 on the host machine
+    restart: always
+    depends_on: 
+      - db # This service depends on mysql. Start that first.
+    environment: # Pass environment variables to the service
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/testdb?useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root123     
+    networks: # Networks to join (Services on the same network can communicate with each other using their name)
+      - backend
+      - frontend
+
+
+
+  # Database Service (Mysql)
+  db:
+    image: mysql:5.7
+    ports:
+      - "3306:3306"
+    restart: always
+    environment:
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: root
+      MYSQL_PASSWORD: root123
+      MYSQL_ROOT_PASSWORD: root123
+    volumes:
+      - db-data:/var/lib/mysql
+    networks:
+      - backend  
+  
+# Volumes
+volumes:
+  db-data:
+
+# Networks to be created to facilitate communication between containers
+networks:
+  backend:
+  frontend:    
+# --  – mysqldb:
+
+            # -- image: official Docker image
+            # -- restart: configure the restart policy
+            # -- env_file: specify our .env path that we will create later
+            # -- environment: provide setting using environment variables
+            # -- ports: specify ports will be used
+            # -- volumes: map volume folders
+# -- – app:
+
+          # -- depends_on: dependency order, mysqldb is started before app
+          # -- build: configuration options that are applied at build time that we defined in the Dockerfile with relative path
+          # -- environment: environmental variables that Spring Boot application uses
+          # -- stdin_open and tty: keep open the terminal after building container
+          # -- You should note that the host port (LOCAL_PORT) and the container port (DOCKER_PORT) is different. Networked service-to-service communication uses the container port, and the outside uses the host port.
